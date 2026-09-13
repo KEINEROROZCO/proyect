@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galaxia de Girasoles & Agujero Negro 3D | Amor Infinito 🌻✨</title>
+
+  <!-- Google Fonts for modern romantic typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Outfit:wght@300;400;600;700&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <!-- Canvas for 3D Three.js Scene -->
+  <div id="canvas-container"></div>
+
+  <!-- Animated Glowing Hearts Border Overlay -->
+  <div class="glowing-hearts-frame">
+    <div class="frame-corner top-left">💖</div>
+    <div class="frame-corner top-right">💖</div>
+    <div class="frame-corner bottom-left">💖</div>
+    <div class="frame-corner bottom-right">💖</div>
+    <div class="hearts-border-line top"></div>
+    <div class="hearts-border-line bottom"></div>
+    <div class="hearts-border-line left"></div>
+    <div class="hearts-border-line right"></div>
+  </div>
+
+  <!-- Romantic Ambient Floating Hearts Particle Container -->
+  <div id="floating-hearts-overlay"></div>
+
+  <!-- Top Glassmorphism Navigation Bar -->
+  <header class="top-nav">
+    <div class="logo-title">
+      <span class="icon-sunflower">🌻</span>
+      <div>
+        <h1>Galaxia de Girasoles</h1>
+        <p class="subtitle">Universo de Amor & Agujero Negro Infinito ✨</p>
+      </div>
+    </div>
+
+    <div class="nav-controls">
+      <div class="preset-selector">
+        <label for="scene-preset">Modo:</label>
+        <select id="scene-preset">
+          <option value="galaxy">🌻 Galaxia Dorada</option>
+          <option value="blackhole">🕳️ Agujero Negro Infinito</option>
+          <option value="shower">✨ Lluvia de Girasoles</option>
+          <option value="hearts">💖 Noche Romántica</option>
+        </select>
+      </div>
+
+      <button id="btn-custom-message" class="btn-glass">
+        <span>✍️</span> Crear Mensaje
+      </button>
+
+      <button id="btn-audio" class="btn-glass">
+        <span id="audio-icon">🎵</span>
+        <span id="audio-label">Música ON</span>
+        <div class="audio-waves hidden">
+          <span></span><span></span><span></span>
+        </div>
+      </button>
+
+      <button id="btn-fullscreen" class="btn-glass icon-only" title="Pantalla Completa">
+        ⛶
+      </button>
+    </div>
+  </header>
+
+  <!-- Dynamic Floating Spanish Romantic Quotes Container -->
+  <div id="romantic-quotes-container"></div>
+
+  <!-- Interactive Modal for Custom Romantic Messages -->
+  <div id="custom-message-modal" class="modal hidden">
+    <div class="modal-content glass-card">
+      <button class="modal-close" id="modal-close">&times;</button>
+      <h2>💖 Enviar Mensaje a la Galaxia</h2>
+      <p>Escribe tu mensaje especial para que orbite junto a los girasoles dorados:</p>
+
+      <div class="input-group">
+        <input type="text" id="input-sender" placeholder="Tu nombre o apodo (ej. Tu Amor)..." maxlength="30">
+        <textarea id="input-message" placeholder="Escribe aquí tu mensaje de amor..." rows="3" maxlength="140"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-send-message" class="btn-glow">
+          ✨ Lanzar a la Galaxia 🌻
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Code Editor Panel -->
+  <section class="code-editor-panel" id="code-editor-panel">
+    <div class="editor-header">
+      <div class="editor-tabs">
+        <div class="editor-tab active" data-tab="galaxia">
+          <span class="tab-icon">⚡</span> galaxia-girasoles.css
+        </div>
+        <div class="editor-tab" data-tab="corazon">
+          <span class="tab-icon">💖</span> corazones-universo.css
+        </div>
+        <div class="editor-tab" data-tab="girasol">
+          <span class="tab-icon">🌻</span> orbita-amor.css
+        </div>
+      </div>
+
+      <div class="editor-status">
+        <span class="status-indicator"></span>
+        <span id="editor-status-text">CSS Ejecutándose en Tiempo Real</span>
+      </div>
+
+      <div class="editor-actions">
+        <button id="btn-type-effect" class="btn-tool" title="Auto-Escribir Código">
+          <span>⚡</span> Re-Escribir
+        </button>
+        <button id="btn-toggle-editor" class="btn-tool" title="Minimizar / Expandir Editor">
+          <span id="toggle-editor-icon">▼</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Code Editor Body -->
+    <div class="editor-body" id="editor-body">
+      <div class="line-numbers" id="line-numbers"></div>
+      <div class="code-content" id="code-content" contenteditable="false"></div>
+
+      <!-- Quick Sliders Control Bar in Editor -->
+      <div class="editor-controls-bar">
+        <div class="control-item">
+          <label>🌟 Brillo Galaxia</label>
+          <input type="range" id="slider-glow" min="0.2" max="2.5" step="0.1" value="1.2">
+          <span id="val-glow">1.2</span>
+        </div>
+        <div class="control-item">
+          <label>🕳️ Velocidad Agujero Negro</label>
+          <input type="range" id="slider-speed" min="0.1" max="3.0" step="0.1" value="1.0">
+          <span id="val-speed">1.0x</span>
+        </div>
+        <div class="control-item">
+          <label>🌻 Cantidad de Girasoles</label>
+          <input type="range" id="slider-sunflowers" min="10" max="150" step="5" value="60">
+          <span id="val-sunflowers">60</span>
+        </div>
+        <div class="control-item">
+          <label>💖 Frecuencia Corazones</label>
+          <input type="range" id="slider-hearts" min="0.5" max="3" step="0.2" value="1.5">
+          <span id="val-hearts">1.5x</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main JavaScript Bundle Entry point -->
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
