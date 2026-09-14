@@ -1,9 +1,8 @@
 import confetti from 'canvas-confetti';
 
 export class RomanticMessages {
-  constructor(galaxyScene, audioSynth) {
+  constructor(galaxyScene) {
     this.galaxyScene = galaxyScene;
-    this.audioSynth = audioSynth;
 
     this.container = document.getElementById('romantic-quotes-container');
     this.heartsOverlay = document.getElementById('floating-hearts-overlay');
@@ -61,11 +60,9 @@ export class RomanticMessages {
         this.inputMessage.value = '';
         this.modal.classList.add('hidden');
 
-        // Play chime sound & celebration burst
-        if (this.audioSynth) this.audioSynth.playChime();
         confetti({
-          particleCount: 50,
-          spread: 90,
+          particleCount: 40,
+          spread: 80,
           origin: { y: 0.6 },
           colors: ['#ffd700', '#ff2a75', '#ffaa00']
         });
@@ -74,17 +71,16 @@ export class RomanticMessages {
   }
 
   spawnInitialQuotes() {
-    // Spawn 4 random floating cards initially
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < (window.innerWidth < 768 ? 3 : 4); i++) {
       setTimeout(() => {
         const item = this.defaultQuotes[i % this.defaultQuotes.length];
         this.createFloatingQuoteCard(item.text, item.author);
       }, i * 1500);
     }
 
-    // Periodically cycle & float new quotes
     setInterval(() => {
-      if (this.activeCards.length < 5) {
+      const maxCards = window.innerWidth < 768 ? 3 : 5;
+      if (this.activeCards.length < maxCards) {
         const randomQuote = this.defaultQuotes[Math.floor(Math.random() * this.defaultQuotes.length)];
         this.createFloatingQuoteCard(randomQuote.text, randomQuote.author);
       }
@@ -95,9 +91,9 @@ export class RomanticMessages {
     const card = document.createElement('div');
     card.className = 'floating-quote-card';
 
-    // Random positioning around canvas viewport
-    const top = Math.floor(Math.random() * 50 + 15);
-    const left = Math.floor(Math.random() * 65 + 10);
+    const isMobile = window.innerWidth < 768;
+    const top = Math.floor(Math.random() * (isMobile ? 45 : 50) + (isMobile ? 18 : 15));
+    const left = Math.floor(Math.random() * (isMobile ? 45 : 60) + (isMobile ? 5 : 10));
 
     card.style.top = `${top}%`;
     card.style.left = `${left}%`;
@@ -110,15 +106,13 @@ export class RomanticMessages {
       <div class="quote-author">— ${author}</div>
     `;
 
-    // Click on card effect
     card.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (this.audioSynth) this.audioSynth.playChime();
 
-      card.style.transform = 'scale(1.2) rotate(5deg)';
+      card.style.transform = 'scale(1.15) rotate(4deg)';
       confetti({
-        particleCount: 25,
-        spread: 50,
+        particleCount: 20,
+        spread: 45,
         origin: { x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight },
         colors: ['#ffd700', '#ff2a75']
       });
@@ -131,7 +125,6 @@ export class RomanticMessages {
     this.container.appendChild(card);
     this.activeCards.push(card);
 
-    // Auto cleanup after 25s unless it's user custom
     if (!isUserCustom) {
       setTimeout(() => {
         card.style.opacity = '0';
@@ -140,11 +133,10 @@ export class RomanticMessages {
           card.remove();
           this.activeCards = this.activeCards.filter((c) => c !== card);
         }, 1500);
-      }, 25000);
+      }, 22000);
     }
   }
 
-  // Generate continuous background ambient floating hearts
   startAmbientHearts() {
     setInterval(() => {
       const heart = document.createElement('div');
@@ -153,7 +145,7 @@ export class RomanticMessages {
 
       const left = Math.random() * 100;
       const duration = 6 + Math.random() * 5;
-      const size = 0.8 + Math.random() * 0.8;
+      const size = 0.7 + Math.random() * 0.7;
 
       heart.style.left = `${left}vw`;
       heart.style.animationDuration = `${duration}s`;
@@ -164,6 +156,6 @@ export class RomanticMessages {
       setTimeout(() => {
         heart.remove();
       }, duration * 1000);
-    }, 1200);
+    }, 1500);
   }
 }

@@ -5,11 +5,11 @@ export class GalaxyScene {
   constructor(containerElement) {
     this.container = containerElement;
 
-    // Parameters adjustable live by CSS code editor & UI controls
+    // Default Scene Parameters
     this.params = {
       glowIntensity: 1.2,
       blackHoleSpeed: 1.0,
-      sunflowerCount: 60,
+      sunflowerCount: window.innerWidth < 768 ? 40 : 65,
       heartFrequency: 1.5,
       presetMode: 'galaxy'
     };
@@ -30,15 +30,14 @@ export class GalaxyScene {
     // Animation & State
     this.clock = new THREE.Clock();
     this.sunflowerObjects = [];
-    this.raycaster = new THREE.Raycaster();
-    this.mouse = new THREE.Vector2();
 
-    // Camera Orbit Mouse Control State
+    // Camera Orbit Control State (Desktop Mouse & Mobile Touch)
     this.isDragging = false;
-    this.previousMousePosition = { x: 0, y: 0 };
+    this.previousTouchPosition = { x: 0, y: 0 };
+    this.touchStartDistance = 0;
     this.cameraTargetAngle = { x: 0.3, y: 0 };
     this.currentCameraAngle = { x: 0.3, y: 0 };
-    this.cameraRadius = 35;
+    this.cameraRadius = window.innerWidth < 768 ? 42 : 35;
 
     this.init();
   }
@@ -57,16 +56,16 @@ export class GalaxyScene {
     );
     this.updateCameraPosition();
 
-    // 3. Setup Renderer
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    // 3. Setup Renderer (Optimized for Mobile GPUs)
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.2;
     this.container.appendChild(this.renderer.domElement);
 
     // 4. Add Lights
-    const ambientLight = new THREE.AmbientLight(0xfff5cc, 0.8);
+    const ambientLight = new THREE.AmbientLight(0xfff5cc, 0.85);
     this.scene.add(ambientLight);
 
     const pointLight = new THREE.PointLight(0xffd700, 3, 60);
@@ -85,15 +84,14 @@ export class GalaxyScene {
     this.createGlowingHeartsCloud();
     this.createCosmicDust();
 
-    // 6. Setup Event Listeners
+    // 6. Setup Mouse & Touch Event Listeners
     window.addEventListener('resize', () => this.onWindowResize());
-    this.setupMouseInteraction();
+    this.setupInteractions();
 
     // 7. Start Animation Loop
     this.animate();
   }
 
-  // Create procedural textures for glowing particles, petals, and hearts
   createTextures() {
     // Glow Texture
     const canvasGlow = document.createElement('canvas');
@@ -123,31 +121,20 @@ export class GalaxyScene {
     ctxHeart.bezierCurveTo(60, 20, 52, 34, 32, 52);
     ctxHeart.fill();
     this.heartTexture = new THREE.CanvasTexture(canvasHeart);
-
-    // Petal Texture
-    const canvasPetal = document.createElement('canvas');
-    canvasPetal.width = 64;
-    canvasPetal.height = 64;
-    const ctxPetal = canvasPetal.getContext('2d');
-    ctxPetal.fillStyle = '#ffd700';
-    ctxPetal.beginPath();
-    ctxPetal.ellipse(32, 32, 12, 28, Math.PI / 4, 0, Math.PI * 2);
-    ctxPetal.fill();
-    this.petalTexture = new THREE.CanvasTexture(canvasPetal);
   }
 
   // 1. Spinning Black Hole Component
   createBlackHole() {
     this.blackHoleGroup = new THREE.Group();
 
-    // Event Horizon Sphere (Dark central void)
-    const horizonGeo = new THREE.SphereGeometry(3.2, 48, 48);
+    // Event Horizon Sphere
+    const horizonGeo = new THREE.SphereGeometry(3.2, 36, 36);
     const horizonMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
     const eventHorizon = new THREE.Mesh(horizonGeo, horizonMat);
     this.blackHoleGroup.add(eventHorizon);
 
-    // Gravitational Photon Glow Ring
-    const ringGeo = new THREE.RingGeometry(3.25, 4.2, 64);
+    // Photon Ring Glow
+    const ringGeo = new THREE.RingGeometry(3.25, 4.2, 48);
     const ringMat = new THREE.MeshBasicMaterial({
       color: 0xffea00,
       side: THREE.DoubleSide,
@@ -160,7 +147,7 @@ export class GalaxyScene {
     this.blackHoleGroup.add(photonRing);
 
     // Accretion Disk Swirling Particles
-    const count = 4500;
+    const count = window.innerWidth < 768 ? 3000 : 4500;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     const sizes = new Float32Array(count);
@@ -182,7 +169,6 @@ export class GalaxyScene {
       positions[i * 3 + 1] = (Math.random() - 0.5) * 0.6 * (1 - (radius - 3.8) / 8.5);
       positions[i * 3 + 2] = Math.sin(angle) * radius;
 
-      // Color interpolation: gold close to center, pink/orange further out
       const mixRatio = (radius - 3.8) / 8.5;
       const particleColor = colorGold.clone().lerp(mixRatio > 0.6 ? colorPink : colorOrange, mixRatio);
       colors[i * 3] = particleColor.r;
@@ -215,9 +201,9 @@ export class GalaxyScene {
     this.scene.add(this.blackHoleGroup);
   }
 
-  // 2. Glowing Yellow Flower Galaxy Spiral Arms
+  // 2. Yellow Flower Galaxy Spiral Arms
   createYellowFlowerGalaxy() {
-    const particleCount = 12000;
+    const particleCount = window.innerWidth < 768 ? 7000 : 12000;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
@@ -244,7 +230,6 @@ export class GalaxyScene {
       positions[i * 3 + 1] = y;
       positions[i * 3 + 2] = z;
 
-      // Color blend
       const mixedColor = colorInside.clone();
       if (radius < 15) {
         mixedColor.lerp(colorOutside, radius / 15);
@@ -274,7 +259,7 @@ export class GalaxyScene {
     this.scene.add(this.galaxyParticles);
   }
 
-  // 3. 3D Floating Sunflowers System
+  // 3. Floating Sunflowers System
   createFloatingSunflowers() {
     if (this.sunflowersGroup) {
       this.scene.remove(this.sunflowersGroup);
@@ -283,33 +268,21 @@ export class GalaxyScene {
     this.sunflowersGroup = new THREE.Group();
     this.sunflowerObjects = [];
 
-    // Base geometry for a sunflower model mesh
-    const centerGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.15, 24);
-    const centerMat = new THREE.MeshStandardMaterial({
-      color: 0x3d1c00,
-      roughness: 0.8,
-      metalness: 0.1
-    });
+    const centerGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.15, 20);
+    const centerMat = new THREE.MeshStandardMaterial({ color: 0x3d1c00, roughness: 0.8 });
 
     const petalGeo = new THREE.ConeGeometry(0.22, 1.1, 4);
     petalGeo.rotateX(Math.PI / 2);
-    const petalMat = new THREE.MeshStandardMaterial({
-      color: 0xffd700,
-      roughness: 0.3,
-      emissive: 0xffaa00,
-      emissiveIntensity: 0.3
-    });
+    const petalMat = new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.3, emissive: 0xffaa00, emissiveIntensity: 0.3 });
 
     const count = this.params.sunflowerCount;
     for (let i = 0; i < count; i++) {
       const flowerMesh = new THREE.Group();
 
-      // Flower Center
       const center = new THREE.Mesh(centerGeo, centerMat);
       flowerMesh.add(center);
 
-      // Petals ring
-      const numPetals = 16;
+      const numPetals = 14;
       for (let p = 0; p < numPetals; p++) {
         const angle = (p / numPetals) * Math.PI * 2;
         const petal = new THREE.Mesh(petalGeo, petalMat);
@@ -320,7 +293,6 @@ export class GalaxyScene {
         flowerMesh.add(petal);
       }
 
-      // Position in 3D Space floating around galaxy
       const orbitRadius = 10 + Math.random() * 22;
       const orbitAngle = Math.random() * Math.PI * 2;
       const height = (Math.random() - 0.5) * 16;
@@ -331,10 +303,9 @@ export class GalaxyScene {
         Math.sin(orbitAngle) * orbitRadius
       );
 
-      const scale = 0.6 + Math.random() * 0.8;
+      const scale = 0.5 + Math.random() * 0.7;
       flowerMesh.scale.set(scale, scale, scale);
 
-      // Custom animation properties stored on object
       const flowerData = {
         mesh: flowerMesh,
         orbitRadius,
@@ -353,18 +324,16 @@ export class GalaxyScene {
     this.scene.add(this.sunflowersGroup);
   }
 
-  // 4. Glowing Heart Particles Cloud
+  // 4. Glowing Hearts Particles Cloud
   createGlowingHeartsCloud() {
-    const count = 350;
+    const count = 300;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(count * 3);
-    const scales = new Float32Array(count);
 
     for (let i = 0; i < count; i++) {
       positions[i * 3] = (Math.random() - 0.5) * 45;
       positions[i * 3 + 1] = (Math.random() - 0.5) * 30;
       positions[i * 3 + 2] = (Math.random() - 0.5) * 45;
-      scales[i] = Math.random() * 0.8 + 0.3;
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -382,9 +351,9 @@ export class GalaxyScene {
     this.scene.add(this.heartParticles);
   }
 
-  // 5. Cosmic Dust Ambient Stars
+  // 5. Cosmic Dust Stars
   createCosmicDust() {
-    const count = 2000;
+    const count = 1500;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(count * 3);
 
@@ -407,13 +376,14 @@ export class GalaxyScene {
     this.scene.add(this.cosmicDust);
   }
 
-  // Setup Mouse Drag Orbit Controls & Click Bursts
-  setupMouseInteraction() {
+  // Full Desktop & Mobile Touch Gestures Handling
+  setupInteractions() {
     const dom = this.renderer.domElement;
 
+    // MOUSE DRAG
     dom.addEventListener('mousedown', (e) => {
       this.isDragging = true;
-      this.previousMousePosition = { x: e.clientX, y: e.clientY };
+      this.previousTouchPosition = { x: e.clientX, y: e.clientY };
     });
 
     window.addEventListener('mouseup', () => {
@@ -422,41 +392,82 @@ export class GalaxyScene {
 
     window.addEventListener('mousemove', (e) => {
       if (this.isDragging) {
-        const deltaX = e.clientX - this.previousMousePosition.x;
-        const deltaY = e.clientY - this.previousMousePosition.y;
+        const deltaX = e.clientX - this.previousTouchPosition.x;
+        const deltaY = e.clientY - this.previousTouchPosition.y;
 
         this.cameraTargetAngle.y -= deltaX * 0.005;
         this.cameraTargetAngle.x += deltaY * 0.005;
 
-        // Clamp vertical angle
         this.cameraTargetAngle.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, this.cameraTargetAngle.x));
-
-        this.previousMousePosition = { x: e.clientX, y: e.clientY };
+        this.previousTouchPosition = { x: e.clientX, y: e.clientY };
       }
     });
 
-    // Zoom on Wheel
+    // MOUSE WHEEL ZOOM
     dom.addEventListener('wheel', (e) => {
       this.cameraRadius += e.deltaY * 0.02;
-      this.cameraRadius = Math.max(15, Math.min(65, this.cameraRadius));
+      this.cameraRadius = Math.max(15, Math.min(70, this.cameraRadius));
     });
 
-    // Click interactive firework burst
+    // MOUSE CLICK BURST
     dom.addEventListener('click', (e) => {
-      if (Math.abs(e.clientX - this.previousMousePosition.x) < 5) {
+      if (Math.abs(e.clientX - this.previousTouchPosition.x) < 5) {
         this.triggerClickCelebration(e.clientX, e.clientY);
+      }
+    });
+
+    // MOBILE TOUCH GESTURES (Single finger orbit drag & Two finger pinch zoom)
+    dom.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        this.isDragging = true;
+        this.previousTouchPosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      } else if (e.touches.length === 2) {
+        this.isDragging = false;
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        this.touchStartDistance = Math.hypot(dx, dy);
+      }
+    }, { passive: true });
+
+    dom.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1 && this.isDragging) {
+        const deltaX = e.touches[0].clientX - this.previousTouchPosition.x;
+        const deltaY = e.touches[0].clientY - this.previousTouchPosition.y;
+
+        this.cameraTargetAngle.y -= deltaX * 0.006;
+        this.cameraTargetAngle.x += deltaY * 0.006;
+
+        this.cameraTargetAngle.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, this.cameraTargetAngle.x));
+        this.previousTouchPosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      } else if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const distance = Math.hypot(dx, dy);
+
+        if (this.touchStartDistance > 0) {
+          const deltaDistance = this.touchStartDistance - distance;
+          this.cameraRadius += deltaDistance * 0.08;
+          this.cameraRadius = Math.max(15, Math.min(70, this.cameraRadius));
+        }
+        this.touchStartDistance = distance;
+      }
+    }, { passive: true });
+
+    dom.addEventListener('touchend', (e) => {
+      if (e.touches.length === 0) {
+        this.isDragging = false;
+        this.touchStartDistance = 0;
       }
     });
   }
 
-  // Trigger celebration particle burst at click position
   triggerClickCelebration(screenX, screenY) {
     const normX = screenX / window.innerWidth;
     const normY = screenY / window.innerHeight;
 
     confetti({
-      particleCount: 35,
-      spread: 70,
+      particleCount: 30,
+      spread: 60,
       origin: { x: normX, y: normY },
       colors: ['#ffd700', '#ff2a75', '#ffb700', '#ffffff'],
       shapes: ['star', 'circle']
@@ -470,19 +481,16 @@ export class GalaxyScene {
     this.camera.lookAt(0, 0, 0);
   }
 
-  // Main Render Animation Loop
   animate() {
     requestAnimationFrame(() => this.animate());
 
     const delta = this.clock.getDelta();
     const elapsedTime = this.clock.getElapsedTime();
 
-    // Smooth camera inertia
     this.currentCameraAngle.x += (this.cameraTargetAngle.x - this.currentCameraAngle.x) * 0.05;
     this.currentCameraAngle.y += (this.cameraTargetAngle.y - this.currentCameraAngle.y) * 0.05;
     this.updateCameraPosition();
 
-    // 1. Rotate Black Hole Accretion Disk & Galaxy
     const speedMult = this.params.blackHoleSpeed;
 
     if (this.blackHoleGroup) {
@@ -493,7 +501,6 @@ export class GalaxyScene {
       const positions = this.accretionParticles.geometry.attributes.position.array;
       for (let i = 0; i < this.accretionRadii.length; i++) {
         const radius = this.accretionRadii[i];
-        // Keplerian orbital speed: faster near event horizon
         const orbitSpeed = (4.0 / Math.sqrt(radius)) * speedMult * delta;
         this.accretionAngles[i] += orbitSpeed;
 
@@ -507,7 +514,6 @@ export class GalaxyScene {
       this.galaxyParticles.rotation.y += 0.08 * delta * speedMult;
     }
 
-    // 2. Animate Floating Sunflowers
     this.sunflowerObjects.forEach((item) => {
       item.orbitAngle += item.orbitSpeed * 0.2 * speedMult * delta;
       item.mesh.position.x = Math.cos(item.orbitAngle) * item.orbitRadius;
@@ -518,7 +524,6 @@ export class GalaxyScene {
       item.mesh.rotation.y += item.rotSpeedY * delta;
     });
 
-    // 3. Animate Glowing Heart Particles drifting upwards
     if (this.heartParticles) {
       const pos = this.heartParticles.geometry.attributes.position.array;
       const freq = this.params.heartFrequency;
@@ -532,47 +537,30 @@ export class GalaxyScene {
       this.heartParticles.geometry.attributes.position.needsUpdate = true;
     }
 
-    // Render Scene
     this.renderer.render(this.scene, this.camera);
   }
 
-  // Update Parameters dynamically from CSS editor / Sliders
-  updateParameters(newParams) {
-    Object.assign(this.params, newParams);
-
-    if (newParams.glowIntensity !== undefined && this.galaxyParticles) {
-      this.galaxyParticles.material.size = 0.45 * newParams.glowIntensity;
-    }
-
-    if (newParams.sunflowerCount !== undefined) {
-      this.createFloatingSunflowers();
-    }
-  }
-
-  // Preset scene mode change
   setPresetMode(mode) {
     this.params.presetMode = mode;
+    const isMobile = window.innerWidth < 768;
+
     switch (mode) {
       case 'blackhole':
         this.cameraTargetAngle = { x: 0.7, y: 0.2 };
-        this.cameraRadius = 22;
-        this.updateParameters({ blackHoleSpeed: 2.2, glowIntensity: 1.8, sunflowerCount: 20 });
+        this.cameraRadius = isMobile ? 28 : 22;
         break;
       case 'shower':
         this.cameraTargetAngle = { x: 0.1, y: 0 };
-        this.cameraRadius = 40;
-        this.updateParameters({ sunflowerCount: 120, blackHoleSpeed: 0.5, glowIntensity: 1.0 });
+        this.cameraRadius = isMobile ? 48 : 40;
         break;
       case 'hearts':
         this.cameraTargetAngle = { x: 0.4, y: 0.5 };
-        this.cameraRadius = 30;
-        this.updateParameters({ heartFrequency: 2.8, glowIntensity: 1.5, sunflowerCount: 50 });
+        this.cameraRadius = isMobile ? 36 : 30;
         break;
       case 'galaxy':
       default:
         this.cameraTargetAngle = { x: 0.3, y: 0 };
-        this.cameraRadius = 35;
-        this.updateParameters({ blackHoleSpeed: 1.0, glowIntensity: 1.2, sunflowerCount: 60, heartFrequency: 1.5 });
+        this.cameraRadius = isMobile ? 42 : 35;
         break;
     }
   }
