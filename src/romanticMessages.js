@@ -37,21 +37,47 @@ export class RomanticMessages {
   }
 
   setupModalEvents() {
-    this.btnCustomMessage.addEventListener('click', () => {
+    const openModal = (e) => {
+      if (e) e.stopPropagation();
       this.modal.classList.remove('hidden');
-    });
+      setTimeout(() => this.inputMessage.focus(), 150);
+    };
 
-    this.btnCloseModal.addEventListener('click', () => {
+    const closeModal = (e) => {
+      if (e) e.stopPropagation();
       this.modal.classList.add('hidden');
-    });
+    };
 
-    this.modal.addEventListener('click', (e) => {
-      if (e.target === this.modal) {
-        this.modal.classList.add('hidden');
-      }
-    });
+    // Open Modal Event Listeners
+    if (this.btnCustomMessage) {
+      this.btnCustomMessage.addEventListener('click', openModal);
+      this.btnCustomMessage.addEventListener('pointerdown', (e) => e.stopPropagation());
+      this.btnCustomMessage.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        openModal(e);
+      });
+    }
 
-    this.btnSendMessage.addEventListener('click', () => {
+    // Close Modal Event Listeners
+    if (this.btnCloseModal) {
+      this.btnCloseModal.addEventListener('click', closeModal);
+      this.btnCloseModal.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        closeModal(e);
+      });
+    }
+
+    if (this.modal) {
+      this.modal.addEventListener('click', (e) => {
+        if (e.target === this.modal) {
+          closeModal(e);
+        }
+      });
+    }
+
+    // Send Message Handler
+    const sendMessage = (e) => {
+      if (e) e.stopPropagation();
       const sender = this.inputSender.value.trim() || 'Tu Amor';
       const text = this.inputMessage.value.trim();
 
@@ -61,13 +87,21 @@ export class RomanticMessages {
         this.modal.classList.add('hidden');
 
         confetti({
-          particleCount: 40,
+          particleCount: 45,
           spread: 80,
           origin: { y: 0.6 },
           colors: ['#ffd700', '#ff2a75', '#ffaa00']
         });
       }
-    });
+    };
+
+    if (this.btnSendMessage) {
+      this.btnSendMessage.addEventListener('click', sendMessage);
+      this.btnSendMessage.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        sendMessage(e);
+      });
+    }
   }
 
   spawnInitialQuotes() {
@@ -106,7 +140,7 @@ export class RomanticMessages {
       <div class="quote-author">— ${author}</div>
     `;
 
-    card.addEventListener('click', (e) => {
+    const triggerBurst = (e) => {
       e.stopPropagation();
 
       card.style.transform = 'scale(1.15) rotate(4deg)';
@@ -120,6 +154,12 @@ export class RomanticMessages {
       setTimeout(() => {
         card.style.transform = '';
       }, 400);
+    };
+
+    card.addEventListener('click', triggerBurst);
+    card.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      triggerBurst(e);
     });
 
     this.container.appendChild(card);
