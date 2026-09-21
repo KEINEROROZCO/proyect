@@ -1,3 +1,4 @@
+import './style.css';
 import { GalaxyScene } from './galaxyScene.js';
 import { RomanticMessages } from './romanticMessages.js';
 

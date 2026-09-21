@@ -355,6 +355,28 @@ html, body {
   text-align: right;
 }
 
+.floating-quote-card.fade-in-card {
+  animation: fadeInCard 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, floatOrbit 18s ease-in-out infinite alternate 1.2s;
+}
+
+.floating-quote-card.fade-out {
+  opacity: 0 !important;
+  transform: scale(0.85) translateY(-20px) !important;
+  transition: opacity 1.2s ease, transform 1.2s ease !important;
+  pointer-events: none !important;
+}
+
+@keyframes fadeInCard {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 @keyframes floatOrbit {
   0% { transform: translate(0, 0) rotate(-2deg); }
   50% { transform: translate(12px, -18px) rotate(2deg); }

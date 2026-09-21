@@ -16,17 +16,32 @@ export class RomanticMessages {
     this.inputSender = document.getElementById('input-sender');
     this.inputMessage = document.getElementById('input-message');
 
-    // Curated Spanish Romantic Quotes
+    // Expanded Spanish Romantic & Sunflower Quotes
     this.defaultQuotes = [
+      { text: "Te quiero mucho 💛", author: "Con todo mi amor" },
+      { text: "Feliz día de las flores amarillas 🌻✨", author: "21 de Septiembre" },
       { text: "Eres la estrella más brillante de toda mi galaxia 💛", author: "Para ti" },
       { text: "Tu amor es mi agujero negro: me atrae hacia ti sin final ✨", author: "Amor Infinito" },
-      { text: "21 de Septiembre: Te regalo un universo de Flores Amarillas 🌻", author: "Con todo mi corazón" },
-      { text: "Entre billones de estrellas en el espacio, te elegiría a ti 💖", author: "Por siempre" },
+      { text: "Entre billones de estrellas en el espacio, te elegiría siempre a ti 💖", author: "Por siempre" },
       { text: "Un amor más grande que el mismo espacio-tiempo 🌌", author: "Eternamente" },
-      { text: "Mi corazón orbita alrededor de tu luz 💛", author: "Tu Fan Número 1" }
+      { text: "Mi corazón orbita alrededor de tu luz 💛", author: "Tu Fan Número 1" },
+      { text: "Cada flor amarilla lleva un pedacito de mi corazón 🌻", author: "Para la persona más especial" },
+      { text: "Eres lo mejor que me ha pasado en la vida 💖", author: "Siempre tuyo" },
+      { text: "Tu sonrisa ilumina todo mi universo ✨💛", author: "Con admiración" },
+      { text: "Flores amarillas para la persona que alegra mis días 🌻💖", author: "Detalle especial" },
+      { text: "Te amo hoy, mañana y para siempre 💫", author: "Mi vida entera" },
+      { text: "Mi lugar favorito en el mundo entero es a tu lado 💛", author: "Juntos por siempre" },
+      { text: "Eres mi sol en los días nublados ☀️💛", author: "Te adoro" },
+      { text: "Gracias por llenar mi vida de luz, risas y colores 🌻✨", author: "Universo de amor" },
+      { text: "Contigo hasta el infinito y más allá 🌌💫", author: "Amor Estelar" },
+      { text: "Eres mi sueño hecho realidad 💖", author: "Con todo mi corazón" },
+      { text: "Un detalle amarillo para alguien verdaderamente inolvidable 🌻💛", author: "21 de Septiembre" },
+      { text: "Te adoro con toda mi alma y mi corazón 💖✨", author: "Por siempre tuyo" },
+      { text: "Eres el centro de mi propia galaxia 🌌💛", author: "Amor Eterno" }
     ];
 
     this.activeCards = [];
+    this.quoteIndex = 0;
     this.init();
   }
 
@@ -105,32 +120,76 @@ export class RomanticMessages {
   }
 
   spawnInitialQuotes() {
-    for (let i = 0; i < (window.innerWidth < 768 ? 3 : 4); i++) {
+    const isMobile = window.innerWidth < 768;
+    const initialCount = isMobile ? 3 : 4;
+
+    // Spawn initial quotes with staggered delay
+    for (let i = 0; i < initialCount; i++) {
       setTimeout(() => {
-        const item = this.defaultQuotes[i % this.defaultQuotes.length];
-        this.createFloatingQuoteCard(item.text, item.author);
-      }, i * 1500);
+        this.spawnNextQuote();
+      }, i * 1200);
     }
 
+    // Continuous gradual spawner to maintain multiple floating messages simultaneously
     setInterval(() => {
-      const maxCards = window.innerWidth < 768 ? 3 : 5;
+      const maxCards = window.innerWidth < 768 ? 4 : 6;
       if (this.activeCards.length < maxCards) {
-        const randomQuote = this.defaultQuotes[Math.floor(Math.random() * this.defaultQuotes.length)];
-        this.createFloatingQuoteCard(randomQuote.text, randomQuote.author);
+        this.spawnNextQuote();
       }
-    }, 12000);
+    }, 2800);
+  }
+
+  spawnNextQuote() {
+    const item = this.defaultQuotes[this.quoteIndex % this.defaultQuotes.length];
+    this.quoteIndex++;
+    this.createFloatingQuoteCard(item.text, item.author);
+  }
+
+  findNonOverlappingPosition() {
+    const isMobile = window.innerWidth < 768;
+    const minTop = isMobile ? 16 : 14;
+    const maxTop = isMobile ? 70 : 75;
+    const minLeft = isMobile ? 5 : 8;
+    const maxLeft = isMobile ? 50 : 68;
+
+    let bestTop = 30;
+    let bestLeft = 30;
+    let maxMinDist = -1;
+
+    // Attempt 12 random candidate positions to find maximum spacing from existing active cards
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const candTop = Math.floor(Math.random() * (maxTop - minTop) + minTop);
+      const candLeft = Math.floor(Math.random() * (maxLeft - minLeft) + minLeft);
+
+      if (this.activeCards.length === 0) {
+        return { top: candTop, left: candLeft };
+      }
+
+      let minDist = Infinity;
+      for (const cardData of this.activeCards) {
+        const dTop = candTop - cardData.pos.top;
+        const dLeft = candLeft - cardData.pos.left;
+        const dist = Math.sqrt(dTop * dTop + dLeft * dLeft);
+        if (dist < minDist) minDist = dist;
+      }
+
+      if (minDist > maxMinDist) {
+        maxMinDist = minDist;
+        bestTop = candTop;
+        bestLeft = candLeft;
+      }
+    }
+
+    return { top: bestTop, left: bestLeft };
   }
 
   createFloatingQuoteCard(text, author, isUserCustom = false) {
     const card = document.createElement('div');
-    card.className = 'floating-quote-card';
+    card.className = 'floating-quote-card fade-in-card';
 
-    const isMobile = window.innerWidth < 768;
-    const top = Math.floor(Math.random() * (isMobile ? 45 : 50) + (isMobile ? 18 : 15));
-    const left = Math.floor(Math.random() * (isMobile ? 45 : 60) + (isMobile ? 5 : 10));
-
-    card.style.top = `${top}%`;
-    card.style.left = `${left}%`;
+    const pos = this.findNonOverlappingPosition();
+    card.style.top = `${pos.top}%`;
+    card.style.left = `${pos.left}%`;
 
     const icon = isUserCustom ? '💌' : (Math.random() < 0.5 ? '🌻' : '💖');
 
@@ -145,10 +204,10 @@ export class RomanticMessages {
 
       card.style.transform = 'scale(1.15) rotate(4deg)';
       confetti({
-        particleCount: 20,
-        spread: 45,
+        particleCount: 25,
+        spread: 50,
         origin: { x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight },
-        colors: ['#ffd700', '#ff2a75']
+        colors: ['#ffd700', '#ff2a75', '#ffffff']
       });
 
       setTimeout(() => {
@@ -163,18 +222,20 @@ export class RomanticMessages {
     });
 
     this.container.appendChild(card);
-    this.activeCards.push(card);
 
-    if (!isUserCustom) {
+    const cardRecord = { element: card, pos: pos };
+    this.activeCards.push(cardRecord);
+
+    // Gradual Lifecycle: Display for 8.5s - 12s, then smooth fade-out and replace
+    const displayDuration = isUserCustom ? 25000 : (8500 + Math.random() * 3500);
+
+    setTimeout(() => {
+      card.classList.add('fade-out');
       setTimeout(() => {
-        card.style.opacity = '0';
-        card.style.transition = 'opacity 1.5s ease';
-        setTimeout(() => {
-          card.remove();
-          this.activeCards = this.activeCards.filter((c) => c !== card);
-        }, 1500);
-      }, 22000);
-    }
+        card.remove();
+        this.activeCards = this.activeCards.filter((c) => c !== cardRecord);
+      }, 1200);
+    }, displayDuration);
   }
 
   startAmbientHearts() {
@@ -196,6 +257,6 @@ export class RomanticMessages {
       setTimeout(() => {
         heart.remove();
       }, duration * 1000);
-    }, 1500);
+    }, 1400);
   }
 }
